@@ -1,0 +1,15 @@
+{
+  "name": "nuxt3-template",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi build",
+    "start": "nuxi preview"
+  },
+  "dependencies": {
+    "nuxt": "^3.9.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
