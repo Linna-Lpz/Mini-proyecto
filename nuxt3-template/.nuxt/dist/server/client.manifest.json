@@ -7,12 +7,12 @@
     "module": true,
     "resourceType": "script"
   },
-  "C:/UNIVERSIDAD/CITIAPS/Mini proyecto/nuxt3-template/node_modules/nuxt/dist/app/entry.js": {
+  "C:/UNIVERSIDAD/CITIAPS/Mini-proyecto/nuxt3-template/node_modules/nuxt/dist/app/entry.js": {
     "resourceType": "script",
     "module": true,
     "prefetch": true,
     "preload": true,
     "isEntry": true,
-    "file": "C:/UNIVERSIDAD/CITIAPS/Mini proyecto/nuxt3-template/node_modules/nuxt/dist/app/entry.js"
+    "file": "C:/UNIVERSIDAD/CITIAPS/Mini-proyecto/nuxt3-template/node_modules/nuxt/dist/app/entry.js"
   }
 }

@@ -12,9 +12,9 @@ func RegisterRoutes(router *gin.Engine) {
 func CreateArticleRoutes(router *gin.Engine) {
     articleGroup := router.Group("/articles")
     {
-        articleGroup.POST("/", controllers.Create)
-        articleGroup.GET("/", controllers.Get)
-        articleGroup.GET("/:id", controllers.GetArticle)
-        articleGroup.POST("/:id/comments", controllers.Create)
+        articleGroup.POST("/", controllers.Create)  // Crrear un nuevo artículo
+        articleGroup.GET("/", controllers.Get)  // Obtener todos los artículos
+        articleGroup.GET("/:id", controllers.GetArticle)    // Obtener un artículo por ID
+        articleGroup.POST("/:id/comments", controllers.PostComment) // Publicar un comentario en un artículo
     }
 }

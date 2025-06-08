@@ -60,6 +60,23 @@ func Get(c *gin.Context) {
 	c.JSON(http.StatusOK, articles)
 }
 
+// Función auxiliar para obtener comentarios por ArticleID
+func FetchCommentsByArticleID(ctx context.Context, articleID string) ([]models.Comment, error) {
+    commentsCollection := services.Client.Database("commentsdb").Collection("comments")
+    filter := bson.M{"article_id": articleID}
+    cursor, err := commentsCollection.Find(ctx, filter)
+    if err != nil {
+        return nil, err
+    }
+    defer cursor.Close(ctx)
+
+    var comments []models.Comment
+    if err = cursor.All(ctx, &comments); err != nil {
+        return nil, err
+    }
+    return comments, nil
+}
+
 // Get:  Devuelve un artículo con sus comentarios.
 func GetArticle(c *gin.Context) {
 	idParam := c.Param("id")
@@ -80,18 +97,9 @@ func GetArticle(c *gin.Context) {
 		return
 	}
 
-	// Obtener comentarios asociados al artículo
-	commentsCollection := services.Client.Database("commentsdb").Collection("comments")
-	commentsCursor, err := commentsCollection.Find(ctx, bson.M{"articleid": idParam})
+	comments, err := FetchCommentsByArticleID(ctx, idParam)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener los comentarios"})
-		return
-	}
-	defer commentsCursor.Close(ctx)
-
-	var comments []models.Comment
-	if err = commentsCursor.All(ctx, &comments); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al procesar los comentarios"})
 		return
 	}
 

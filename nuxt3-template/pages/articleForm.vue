@@ -1,26 +1,34 @@
 <template>
     <div class="vintage-container">
         <div class="parchment-bg">
-            <h1 class="vintage-title">Listado de Artículos</h1>
-            
+            <NuxtLink 
+                class="read-manuscript-btn"
+                to="/articlesList"
+            > Volver
+            </NuxtLink>
+
             <div v-if="loading" class="loading-vintage">
                 Cargando artículos
             </div>
             
             <div v-else>
-                <div v-if="articles.length === 0" class="no-articles-vintage">
-                    No hay artículos disponibles
+                <div v-if="!article" class="no-articles-vintage">
+                    El artículo no existe o no se pudo cargar.
                 </div>
-                
-                <div v-else class="articles-collection">
-                    <div v-for="(article) in articles" class="manuscript-card">
-                        <div class="manuscript-title">{{ article.title }}</div>
-                        <div class="manuscript-content">{{ article.content }}</div>
-                        <NuxtLink
-                            class="read-manuscript-btn"
-                            :to="{name: 'articleForm', query: { id: article.id }}"
-                        > Leer artículo completo
-                        </NuxtLink>
+                <div v-else class="">
+                    <div class="manuscript-title">{{ article.article.title}}</div>
+                    <div class="manuscript-content">{{ article.article.content }}</div>
+                    <div>
+                        <div class="parchment-bg">
+                            <h3>Deja tu comentario</h3>
+                            
+                        </div>
+                        <div v-if="!article.comments"> Aún no hay comentarios ¡Se el primero en comentar!</div>
+                        <div v-else >
+                            <div class="parchment-bg" v-for="(comment) in article.comments" :key="comment.id">
+                                {{ comment.author }}: {{ comment.text }}: {{ comment.created_at }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -28,13 +36,19 @@
     </div>
 </template>
 
-<script setup>
-const { data, pending: loading } = await useFetch('http://localhost:8080/articles/')
-const articles = computed(() => data.value ?? [])
+
+<script lang="ts" setup>
+import { useRoute } from 'vue-router'
+const route = useRoute()
+const id = route.query.id
+const { data, pending: loading } = await useFetch(`http://localhost:8080/articles/${id}`)
+const article = computed(() => data.value ?? null)
+
+const { data: commentsData } = await useFetch(`http://localhost:8080/articles/${id}/comments`)
 </script>
 
-<style scoped>
 
+<style scoped>
 .vintage-container {
     min-height:100%;
     padding: 40px 20px;
@@ -95,10 +109,6 @@ const articles = computed(() => data.value ?? [])
     font-size: 18px;
     line-height: 20px;
     margin-bottom: 25px;
-    /* Para mostrar solo una línea del contexto */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .read-manuscript-btn {

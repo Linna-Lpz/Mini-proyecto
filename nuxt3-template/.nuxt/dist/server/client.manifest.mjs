@@ -1,1 +1,1 @@
-export { default } from "file:///C:/UNIVERSIDAD/CITIAPS/Mini%20proyecto/nuxt3-template/node_modules/@nuxt/vite-builder/dist/runtime/client.manifest.mjs"
+export { default } from "file:///C:/UNIVERSIDAD/CITIAPS/Mini-proyecto/nuxt3-template/node_modules/@nuxt/vite-builder/dist/runtime/client.manifest.mjs"
