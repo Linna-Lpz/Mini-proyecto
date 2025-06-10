@@ -11,5 +11,6 @@ export default defineNuxtConfig({
         { name: 'description', content: 'Template de prueba para postulantes' }
       ]
     }
-  }
+  },
+  css : ['~/assets/css/main.css'],
 })
