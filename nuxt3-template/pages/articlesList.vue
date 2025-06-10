@@ -1,6 +1,12 @@
 <template>
     <div class="vintage-container">
         <div class="parchment-bg">
+            <NuxtLink 
+                class="read-manuscript-btn"
+                to="/"
+            > Inicio
+            </NuxtLink>
+
             <h1 class="vintage-title">Listado de Artículos</h1>
             
             <div v-if="loading" class="loading-vintage">
@@ -13,7 +19,7 @@
                 </div>
                 
                 <div v-else class="articles-collection">
-                    <div v-for="(article) in articles" class="manuscript-card">
+                    <div v-for="(article) in paginatedArticles" :key="article.id" class="manuscript-card">
                         <div class="manuscript-title">{{ article.title }}</div>
                         <div class="manuscript-content">{{ article.content }}</div>
                         <NuxtLink
@@ -23,14 +29,38 @@
                         </NuxtLink>
                     </div>
                 </div>
+                <div class="pagination-vintage">
+                    <UPagination
+                        v-model="page"
+                        :page-count="pageCount"
+                        :total="articles.length"
+                        :size="5"
+                        :rounded="true"
+                    />
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
+import { ref, computed } from 'vue'
+import { UPagination } from '@nuxt/ui'
+
 const { data, pending: loading } = await useFetch('http://localhost:8080/articles/')
 const articles = computed(() => data.value ?? [])
+
+const page = ref(1)
+const pageSize = 5 // artículos por página
+
+const pageCount = computed(() =>
+  Math.ceil(articles.value.length / pageSize)
+)
+
+const paginatedArticles = computed(() => {
+  const start = (page.value - 1) * pageSize
+  return articles.value.slice(start, start + pageSize)
+})
 </script>
 
 <style scoped>
@@ -110,5 +140,11 @@ const articles = computed(() => data.value ?? [])
     text-decoration: none;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(139, 118, 76, 0.2);
+}
+
+.pagination-vintage {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
 }
 </style>
