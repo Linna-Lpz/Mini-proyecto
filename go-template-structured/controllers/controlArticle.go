@@ -66,11 +66,17 @@ func Get(c *gin.Context) {
         offset = 0
     }
 
+	// Contar el total de artículos
+    totalCount, err := collection.CountDocuments(ctx, bson.M{})
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al contar los artículos"})
+        return
+    }
+
     // Configurar opciones de paginación
     findOptions := options.Find()
     findOptions.SetLimit(int64(limit))
     findOptions.SetSkip(int64(offset))
-    findOptions.SetSort(bson.D{{"_id", -1}}) // Ordenar por más reciente
 
     cursor, err := collection.Find(ctx, bson.M{}, findOptions)
     if err != nil {
@@ -89,6 +95,7 @@ func Get(c *gin.Context) {
         "data":  articles,
         "page":  page,
         "limit": limit,
+		"total": totalCount,
     })
 }
 

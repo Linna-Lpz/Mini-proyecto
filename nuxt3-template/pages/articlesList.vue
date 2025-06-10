@@ -37,19 +37,19 @@
                         :disabled="currentPage <= 1"
                         @click="goToPage(currentPage - 1)"
                     >
-                        Anterior
+                        <
                     </button>
                     
                     <span class="pagination-info">
-                        Página {{ currentPage }}
+                        Página {{ currentPage }} de {{ totalPages }}
                     </span>
                     
                     <button 
                         class="pagination-btn"
-                        :disabled="articles.length < limit"
+                        :disabled="currentPage >= totalPages"
                         @click="goToPage(currentPage + 1)"
                     >
-                        Siguiente
+                        >
                     </button>
                 </div>
             </div>
@@ -78,6 +78,8 @@ const { data, pending: loading, refresh } = await useFetch('http://localhost:808
 })
 
 const articles = computed(() => data.value?.data ?? [])
+const totalArticles = computed(() => data.value?.total ?? 0)
+const totalPages = computed(() => Math.ceil(totalArticles.value / limit.value))
 
 // Función para navegar a una página específica
 const goToPage = async (page) => {
