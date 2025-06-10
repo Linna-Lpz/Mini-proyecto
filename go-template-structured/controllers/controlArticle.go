@@ -5,11 +5,13 @@ import (
 	"go-template/models"
 	"go-template/services"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Create: Crea un nuevo artículo.
@@ -38,26 +40,56 @@ func Create(c *gin.Context) {
 	})
 }
 
-// Get: Lista todos los artículos.
+// Get: Lista todos los artículos con paginación.
 func Get(c *gin.Context) {
-	collection := services.Client.Database("commentsdb").Collection("articles")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+    collection := services.Client.Database("commentsdb").Collection("articles")
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
 
-	cursor, err := collection.Find(ctx, bson.M{})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener los artículos"})
-		return
-	}
-	defer cursor.Close(ctx)
+    // Obtener parámetros de paginación
+    pageStr := c.DefaultQuery("page", "1")
+    limitStr := c.DefaultQuery("limit", "10")
+    offsetStr := c.DefaultQuery("offset", "0")
 
-	var articles []models.Article
-	if err = cursor.All(ctx, &articles); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al procesar los artículos"})
-		return
-	}
+    page, err := strconv.Atoi(pageStr)
+    if err != nil || page <= 0 {
+        page = 1
+    }
 
-	c.JSON(http.StatusOK, articles)
+    limit, err := strconv.Atoi(limitStr)
+    if err != nil || limit <= 0 {
+        limit = 10
+    }
+
+    offset, err := strconv.Atoi(offsetStr)
+    if err != nil || offset < 0 {
+        offset = 0
+    }
+
+    // Configurar opciones de paginación
+    findOptions := options.Find()
+    findOptions.SetLimit(int64(limit))
+    findOptions.SetSkip(int64(offset))
+    findOptions.SetSort(bson.D{{"_id", -1}}) // Ordenar por más reciente
+
+    cursor, err := collection.Find(ctx, bson.M{}, findOptions)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener los artículos"})
+        return
+    }
+    defer cursor.Close(ctx)
+
+    var articles []models.Article
+    if err = cursor.All(ctx, &articles); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al procesar los artículos"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "data":  articles,
+        "page":  page,
+        "limit": limit,
+    })
 }
 
 // Función auxiliar para obtener comentarios por ArticleID

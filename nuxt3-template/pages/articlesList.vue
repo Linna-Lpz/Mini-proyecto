@@ -19,7 +19,7 @@
                 </div>
                 
                 <div v-else class="articles-collection">
-                    <div v-for="(article) in paginatedArticles" :key="article.id" class="manuscript-card">
+                    <div v-for="(article) in articles" :key="article._id" class="manuscript-card">
                         <div class="manuscript-title">{{ article.title }}</div>
                         <div class="manuscript-content">{{ article.content }}</div>
                         <NuxtLink
@@ -29,14 +29,28 @@
                         </NuxtLink>
                     </div>
                 </div>
+
+                <!-- Paginación -->
                 <div class="pagination-vintage">
-                    <UPagination
-                        v-model="page"
-                        :page-count="pageCount"
-                        :total="articles.length"
-                        :size="5"
-                        :rounded="true"
-                    />
+                    <button 
+                        class="pagination-btn"
+                        :disabled="currentPage <= 1"
+                        @click="goToPage(currentPage - 1)"
+                    >
+                        Anterior
+                    </button>
+                    
+                    <span class="pagination-info">
+                        Página {{ currentPage }}
+                    </span>
+                    
+                    <button 
+                        class="pagination-btn"
+                        :disabled="articles.length < limit"
+                        @click="goToPage(currentPage + 1)"
+                    >
+                        Siguiente
+                    </button>
                 </div>
             </div>
         </div>
@@ -44,22 +58,50 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { UPagination } from '@nuxt/ui'
+const route = useRoute()
+const router = useRouter()
 
-const { data, pending: loading } = await useFetch('http://localhost:8080/articles/')
-const articles = computed(() => data.value ?? [])
+// Parámetros de paginación
+const currentPage = ref(parseInt(route.query.page) || 1)
+const limit = ref(5) // Artículos por página
 
-const page = ref(1)
-const pageSize = 5 // artículos por página
+// Computed para calcular offset
+const offset = computed(() => (currentPage.value - 1) * limit.value)
 
-const pageCount = computed(() =>
-  Math.ceil(articles.value.length / pageSize)
-)
+// Fetch con paginación
+const { data, pending: loading, refresh } = await useFetch('http://localhost:8080/articles/', {
+    query: {
+        page: currentPage,
+        limit: limit,
+        offset: offset
+    }
+})
 
-const paginatedArticles = computed(() => {
-  const start = (page.value - 1) * pageSize
-  return articles.value.slice(start, start + pageSize)
+const articles = computed(() => data.value?.data ?? [])
+
+// Función para navegar a una página específica
+const goToPage = async (page) => {
+    if (page < 1) {
+        return
+    }
+    
+    currentPage.value = page
+    
+    // Actualizar URL
+    await router.push({
+        query: { ...route.query, page: page }
+    })
+    
+    // Refrescar datos
+    await refresh()
+}
+
+// Watch para cambios en la query de la URL
+watch(() => route.query.page, (newPage) => {
+    const page = parseInt(newPage) || 1
+    if (page !== currentPage.value) {
+        currentPage.value = page
+    }
 })
 </script>
 
@@ -145,6 +187,36 @@ const paginatedArticles = computed(() => {
 .pagination-vintage {
     display: flex;
     justify-content: center;
+    align-items: center;
     margin-top: 30px;
+    gap: 20px;
+}
+
+.pagination-btn {
+    background: #8b764c;
+    color: #faf8f3;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(139, 118, 76, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #6d5a3a;
+}
+
+.pagination-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination-info {
+    color: #4a3c1d;
+    font-weight: 600;
+    text-align: center;
 }
 </style>
