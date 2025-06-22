@@ -1,4 +1,6 @@
 # Listado de artículos
+## Descripción
+Pequeño proyecto donde un usuario puede ver una lista de artículos, entrar en cada uno de ellos y dejar un comentario.
 
 ## 🏗️ Estructura del Proyecto
 
@@ -11,7 +13,6 @@
 │   ├── controllers/                 # Controladores de la API
 │   │   ├── controlArticle.go
 │   │   ├── controlComment.go
-│   │   └── ping.go
 │   ├── models/                      # Modelos de datos
 │   │   ├── article.go
 │   │   ├── comment.go
@@ -88,4 +89,4 @@ El proyecto utiliza MongoDB como base de datos. Asegúrate de que MongoDB esté 
 
 ### Modelos disponibles:
 - **Article**: Gestión de artículos
-- **Comment**: Sistema de comentarios
+- **Comment**: Sistema de comentarios de cada artículo
