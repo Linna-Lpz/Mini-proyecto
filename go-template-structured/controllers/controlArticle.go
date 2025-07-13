@@ -14,8 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Create: Crea un nuevo artículo.
-func Create(c *gin.Context) {
+// CreateArticle: Crea un nuevo artículo.
+func CreateArticle(c *gin.Context) {
 	var article models.Article
 
 	// Vincular el cuerpo de la solicitud al modelo Article
@@ -40,84 +40,115 @@ func Create(c *gin.Context) {
 	})
 }
 
-// Get: Lista todos los artículos con paginación.
-func Get(c *gin.Context) {
-    collection := services.Client.Database("commentsdb").Collection("articles")
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-    defer cancel()
+// GetArticles: Lista todos los artículos según filtro, con paginación.
+func GetArticles(c *gin.Context) {
+	collection := services.Client.Database("commentsdb").Collection("articles")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-    // Obtener parámetros de paginación
-    pageStr := c.DefaultQuery("page", "1")
-    limitStr := c.DefaultQuery("limit", "10")
-    offsetStr := c.DefaultQuery("offset", "0")
+	// Filtros
+	filter := bson.M{}
 
-    page, err := strconv.Atoi(pageStr)
-    if err != nil || page <= 0 {
-        page = 1
-    }
+	// Filtro por título (coincidencia parcial, insensible a mayúsculas)
+	title := c.Query("title")
+	if title != "" {
+		filter["title"] = bson.M{"$regex": title, "$options": "i"}
+	}
 
-    limit, err := strconv.Atoi(limitStr)
-    if err != nil || limit <= 0 {
-        limit = 10
-    }
+	// Filtro por rango de fechas
+	from := c.Query("from")
+	to := c.Query("to")
+	dateFilter := bson.M{}
+	if from != "" {
+		if fromTime, err := time.Parse("2006-01-02", from); err == nil {
+			dateFilter["$gte"] = fromTime
+		}
+	}
+	if to != "" {
+		if toTime, err := time.Parse("2006-01-02", to); err == nil {
+			dateFilter["$lte"] = toTime
+		}
+	}
+	if len(dateFilter) > 0 {
+		filter["created_at"] = dateFilter
+	}
 
-    offset, err := strconv.Atoi(offsetStr)
-    if err != nil || offset < 0 {
-        offset = 0
-    }
+	// Paginación
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+	offsetStr := c.DefaultQuery("offset", "0")
 
-	// Contar el total de artículos
-    totalCount, err := collection.CountDocuments(ctx, bson.M{})
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al contar los artículos"})
-        return
-    }
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page <= 0 {
+		page = 1
+	}
 
-    // Configurar opciones de paginación
-    findOptions := options.Find()
-    findOptions.SetLimit(int64(limit))
-    findOptions.SetSkip(int64(offset))
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
 
-    cursor, err := collection.Find(ctx, bson.M{}, findOptions)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener los artículos"})
-        return
-    }
-    defer cursor.Close(ctx)
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
 
-    var articles []models.Article
-    if err = cursor.All(ctx, &articles); err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al procesar los artículos"})
-        return
-    }
+	// Contar el total de artículos con filtro
+	totalCount, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al contar los artículos"})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{
-        "data":  articles,
-        "page":  page,
-        "limit": limit,
+	// Opciones de paginación
+	findOptions := options.Find()
+	findOptions.SetLimit(int64(limit))
+	findOptions.SetSkip(int64(offset))
+
+	cursor, err := collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener los artículos"})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var articles []models.Article
+	if err = cursor.All(ctx, &articles); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al procesar los artículos"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":  articles,
+		"page":  page,
+		"limit": limit,
 		"total": totalCount,
-    })
+	})
 }
 
 // Función auxiliar para obtener comentarios por ArticleID
 func FetchCommentsByArticleID(ctx context.Context, articleID string) ([]models.Comment, error) {
-    commentsCollection := services.Client.Database("commentsdb").Collection("comments")
-    filter := bson.M{"article_id": articleID}
-    cursor, err := commentsCollection.Find(ctx, filter)
-    if err != nil {
-        return nil, err
-    }
-    defer cursor.Close(ctx)
+	commentsCollection := services.Client.Database("commentsdb").Collection("comments")
+	objtID, err := primitive.ObjectIDFromHex(articleID)
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"article_id": objtID}
+	cursor, err := commentsCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
 
-    var comments []models.Comment
-    if err = cursor.All(ctx, &comments); err != nil {
-        return nil, err
-    }
-    return comments, nil
+	var comments []models.Comment
+	if err = cursor.All(ctx, &comments); err != nil {
+		return nil, err
+	}
+	return comments, nil
 }
 
-// Get:  Devuelve un artículo con sus comentarios.
-func GetArticle(c *gin.Context) {
+// GetArticleById:  Devuelve un artículo con sus comentarios.
+func GetArticleById(c *gin.Context) {
 	idParam := c.Param("id")
 	objID, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
@@ -145,34 +176,5 @@ func GetArticle(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"article":  article,
 		"comments": comments,
-	})
-}
-
-// Post: Crea un comentario para un artículo.
-func PostComment(c *gin.Context) {
-	idParam := c.Param("id")
-	var comment models.Comment
-
-	if err := c.ShouldBindJSON(&comment); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos inválidos"})
-		return
-	}
-
-	// Asignar el ID del artículo al comentario (como string)
-	comment.ArticleID = idParam
-
-	commentsCollection := services.Client.Database("commentsdb").Collection("comments")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	res, err := commentsCollection.InsertOne(ctx, comment)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear el comentario"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Comentario creado con éxito",
-		"_id":     res.InsertedID,
 	})
 }
