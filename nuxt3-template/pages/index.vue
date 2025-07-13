@@ -7,7 +7,19 @@
         adentrándote en temas variados. Desde historia hasta ciencia.
       </p>
       <nuxt-link to="/articlesList" class="read-manuscript-btn">
-        Ir a la lista de artículos
+        Comenzar a leer
+      </nuxt-link>
+
+      <p class="intro-vintage">
+        Se parte de nuestra comunidad escritora. Regístrate o inicia sesión para publicar tus
+        propios artículos y compartir tus conocimientos con el mundo.
+      </p>
+      <nuxt-link to="/register" class="read-manuscript-btn">
+        Registrarse
+      </nuxt-link>
+      
+      <nuxt-link to="/login" class="read-manuscript-btn">
+        Iniciar sesión
       </nuxt-link>
     </div>
   </div>

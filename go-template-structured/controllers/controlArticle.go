@@ -4,6 +4,7 @@ import (
 	"context"
 	"go-template/models"
 	"go-template/services"
+	"go-template/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -47,32 +48,8 @@ func GetArticles(c *gin.Context) {
 	defer cancel()
 
 	// Filtros
-	filter := bson.M{}
-
-	// Filtro por título (coincidencia parcial, insensible a mayúsculas)
-	title := c.Query("title")
-	if title != "" {
-		filter["title"] = bson.M{"$regex": title, "$options": "i"}
-	}
-
-	// Filtro por rango de fechas
-	from := c.Query("from")
-	to := c.Query("to")
-	dateFilter := bson.M{}
-	if from != "" {
-		if fromTime, err := time.Parse("2006-01-02", from); err == nil {
-			dateFilter["$gte"] = fromTime
-		}
-	}
-	if to != "" {
-		if toTime, err := time.Parse("2006-01-02", to); err == nil {
-			dateFilter["$lte"] = toTime
-		}
-	}
-	if len(dateFilter) > 0 {
-		filter["created_at"] = dateFilter
-	}
-
+	filter := utils.FilterSearch(c, "title", "created_at")
+	
 	// Paginación
 	pageStr := c.DefaultQuery("page", "1")
 	limitStr := c.DefaultQuery("limit", "10")

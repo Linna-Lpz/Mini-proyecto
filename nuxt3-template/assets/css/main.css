@@ -51,6 +51,12 @@
   color: #6b5b3a;
 }
 
+.date-vintage {
+  font-size: 16px;
+  color: #8b764c;
+  margin-top: 10px;
+}
+
 /* Tarjetas */
 .articles-collection {
   display: flex;
