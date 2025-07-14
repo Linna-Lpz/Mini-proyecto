@@ -118,7 +118,7 @@ const fetchArticles = async () => {
       from: fromDate.value,
       to: toDate.value
     })
-    const res = await fetch(`http://localhost:8080/articles/articles?${params}`)
+    const res = await fetch(`http://localhost:8080/articles?${params}`)
     const json = await res.json()
     articles.value = json.data || []
     totalArticles.value = json.total || 0

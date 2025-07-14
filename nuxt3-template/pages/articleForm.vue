@@ -62,7 +62,7 @@ const route = useRoute()
 const id = route.query.id as string
 
 // @ts-ignore: useFetch es global en Nuxt 3, pero TypeScript puede no reconocerlo sin tipos de Nuxt
-const { data, pending: loading } = useFetch(`http://localhost:8080/articles/articles/${id}`)
+const { data, pending: loading } = useFetch(`http://localhost:8080/articles/${id}`)
 const article = computed(() => data.value ?? null)
 
 const { postComment } = usePostComment()
