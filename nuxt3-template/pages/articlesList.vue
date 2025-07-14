@@ -4,7 +4,7 @@
             <NuxtLink 
                 class="read-manuscript-btn"
                 to="/"
-            > Inicio
+            > Volver al inicio
             </NuxtLink>
 
             <h1 class="vintage-title">Listado de Artículos</h1>

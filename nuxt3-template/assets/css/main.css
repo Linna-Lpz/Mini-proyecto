@@ -8,8 +8,88 @@
   justify-content: center;
 }
 
+/* Login y Registro */
+.login-container,
+.register-container {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fffbe6;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #0001;
+  border: 1px solid #d4c4a0;
+}
+.login-container h2,
+.register-container h2 {
+  text-align: center;
+  color: #5d4e2a;
+  margin-bottom: 1.5rem;
+}
+.login-container form > div,
+.register-container form > div {
+  margin-bottom: 1rem;
+}
+.login-container label,
+.register-container label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #6b5b3a;
+  font-weight: 500;
+}
+.login-container input,
+.register-container input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fffdfa;
+  color: #4a3c1d;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+.login-container button,
+.register-container button {
+  width: 100%;
+  padding: 0.7rem;
+  background: #bfa76f;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 0.5rem;
+  transition: background 0.2s;
+}
+.login-container button:hover,
+.register-container button:hover {
+  background: #a68b5b;
+}
+/* Mensajes de error y éxito con estilo vintage */
+.error-msg {
+  color: #8b764c;
+  background: #f4f1e8;
+  border: 1px solid #d4c4a0;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  text-align: center;
+  padding: 0.5rem 0.7rem;
+  font-weight: 500;
+}
+.success-msg {
+  color: #5d4e2a;
+  background: #faf8f3;
+  border: 1px solid #bfa76f;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  text-align: center;
+  padding: 0.5rem 0.7rem;
+  font-weight: 500;
+}
+
+
 .parchment-bg,
-.parchment-bg-home {
+ .parchment-bg-home {
   margin: 0 auto;
   background: #faf8f3;
   border: 2px solid #8b764c;
@@ -44,8 +124,9 @@
   line-height: 1.5;
 }
 
+
 .loading-vintage,
-.no-articles-vintage {
+ .no-articles-vintage {
   text-align: center;
   padding: 40px 20px;
   color: #6b5b3a;
