@@ -2,7 +2,7 @@
 ## Descripción
 Pequeño proyecto donde un usuario puede ver una lista de artículos, entrar en cada uno de ellos y dejar un comentario.
 
-## 🏗️ Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 ├── README.md
@@ -13,14 +13,20 @@ Pequeño proyecto donde un usuario puede ver una lista de artículos, entrar en 
 │   ├── controllers/                 # Controladores de la API
 │   │   ├── controlArticle.go
 │   │   ├── controlComment.go
+│   ├── helpers/                     # Token
+│   │   ├── token.go                 
+│   ├── middleware/                  # Middleware
+│   │   ├── auth.go    
 │   ├── models/                      # Modelos de datos
 │   │   ├── article.go
 │   │   ├── comment.go
-│   │   └── example.go
+│   │   └── user.go
 │   ├── routes/                      # Configuración de rutas
 │   │   └── routes.go
-│   └── services/                    # Servicios (Base de datos)
-│       └── mongo.go
+│   ├── services/                    # Servicios (Base de datos)
+│   │    └── mongo.go
+│   └── utils/                       
+│       └── filter.go
 └── nuxt3-template/                  # Frontend en Nuxt 3
     ├── nuxt.config.ts
     ├── package.json
@@ -31,7 +37,7 @@ Pequeño proyecto donde un usuario puede ver una lista de artículos, entrar en 
     └── public/
 ```
 
-## 🚀 Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 ### Backend (Go)
 - **Go**: Lenguaje de programación principal
@@ -43,7 +49,7 @@ Pequeño proyecto donde un usuario puede ver una lista de artículos, entrar en 
 - **TypeScript**: Tipado estático
 - **Vue 3**: Framework de JavaScript reactivo
 
-## 🛠️ Instalación y Configuración
+## Instalación y Configuración
 
 ### Backend (Go)
 
@@ -83,7 +89,7 @@ npm run dev
 
 El frontend estará disponible en `http://localhost:3000`.
 
-## 📊 Base de Datos
+## Base de Datos
 
 El proyecto utiliza MongoDB como base de datos. Asegúrate de que MongoDB esté ejecutándose antes de iniciar el backend.
 
