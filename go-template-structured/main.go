@@ -1,7 +1,6 @@
 package main
 
 import (
-	"go-template/config"
 	"go-template/helpers"
 	"go-template/routes"
 	"go-template/services"
@@ -15,15 +14,21 @@ func main() {
     services.InitMongo()
 
     // Key
-    Key := config.GenerateRandomKey()
-    helpers.SetJWTKey(Key)
+    helpers.SetJWTKey("key")
+
 
     r := gin.Default()
-    r.Use(cors.Default())
+    r.Use(cors.New(cors.Config{
+    AllowOrigins:     []string{"http://localhost:3000"},
+    AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+    AllowHeaders:     []string{"Origin", "Authorization", "Content-Type"},
+    ExposeHeaders:    []string{"Content-Length"},
+    AllowCredentials: true,
+}))
+
 
     // Registrar rutas
     routes.CreateArticleRoutes(r)
-    routes.CreateCommentRoutes(r)
     routes.CreateAuthentication(r)
 
     // Iniciar el servidor

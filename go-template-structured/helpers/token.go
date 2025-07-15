@@ -15,6 +15,7 @@ import (
 type Claims struct {
 	UserID string `json:"user_id"`
 	Email  string `json:"email"`
+	Name string `json:"name"`
 
 	jwt.StandardClaims
 }
@@ -47,7 +48,7 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	return nil, errors.New("token inválido")
 }
 
-func GenerateTokens(email string) (string, string) {
+func GenerateTokens(email, name, userId string) (string, string) {
 	log.Printf("JWT Key %v", jwtKey)
 
 	//Token expiration times
@@ -56,6 +57,8 @@ func GenerateTokens(email string) (string, string) {
 
 	claims := &Claims{
 		Email: email,
+		Name: name,
+		UserID: userId,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: tokenExpiry,
 		},

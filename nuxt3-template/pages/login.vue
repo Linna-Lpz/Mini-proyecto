@@ -15,8 +15,9 @@
         <label for="password">Contraseña:</label>
         <input v-model="password" type="password" id="password" required />
       </div>
-      <button type="submit">Entrar</button>
+      <button type="submit">Ingresar</button>
       <p v-if="error" class="error-msg">{{ error }}</p>
+      <p v-if="success" class="success-msg">{{ success }}</p>
     </form>
   </div>
 </template>
@@ -28,16 +29,21 @@ import { useAuth } from '../composables/useAuth'
 const email = ref('')
 const password = ref('')
 const error = ref('')
+const success = ref('')
 const { login } = useAuth()
 
 const onLogin = async () => {
   error.value = ''
+  success.value = ''
   try {
-    await login(email.value, password.value)
-    // Guarda el token en: localStorage.setItem('token', res.token)
-    window.location.href = '/'
+    const res = await login(email.value, password.value)
+    // Guarda el token en: 
+    localStorage.setItem('token', res.token)
+    success.value = 'Inicio de sesión exitoso'
+    email.value = ''
+    password.value = ''
   } catch (e: any) {
-    error.value = e.message || 'Error al iniciar sesión'
+    error.value = e.message
   }
 }
 </script>

@@ -58,6 +58,8 @@ func Signup() gin.HandlerFunc {
 		count, err := collection.CountDocuments(ctx, bson.M{
 			"$or": []bson.M{
 				{"email": user.Email},
+				{"name": user.Name},
+				{"userId": user.ID.Hex()},
 			},
 		})
 
@@ -75,7 +77,7 @@ func Signup() gin.HandlerFunc {
 		hashedPwd := helpers.HashPassword(&user.Password)
 		user.Password = *hashedPwd
 		user.ID = primitive.NewObjectID()
-		accessToken, refreshToken := helpers.GenerateTokens(user.Email)
+		accessToken, refreshToken := helpers.GenerateTokens(user.Email, user.Name, user.ID.Hex())
 		user.Token = &accessToken
 		user.Refresh_token = &refreshToken
 
@@ -124,7 +126,7 @@ func Login() gin.HandlerFunc {
 			return
 		}
 
-		token, refreshToken := helpers.GenerateTokens(foundUser.Email)
+		token, refreshToken := helpers.GenerateTokens(foundUser.Email, foundUser.Name, foundUser.ID.Hex())
 		helpers.UpdateAllTokens(token, refreshToken, foundUser.ID.Hex())
 
 		c.JSON(http.StatusOK, gin.H{
