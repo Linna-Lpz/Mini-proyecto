@@ -63,12 +63,12 @@
                             <div v-else>
                                 <div 
                                     class="comment-card"
-                                    v-for="(comment) in article.comments"
+                                    v-for="(comment) in comments"
                                     :key="comment.id"
                                 >
                                     <div class="comment-header">
                                         <span class="comment-author">{{ comment.author_name || 'Anónimo' }}</span>
-                                        <span class="comment-date">{{ comment.created_at }}</span>
+                                        <span class="comment-date">{{ comment.created_at.slice(0, 10) }}</span>
                                     </div>
                                     <div class="comment-body">{{ comment.text }}</div>
                                 </div>
@@ -100,13 +100,12 @@ const { postComment } = usePostComment()
 const authorId = ref('')
 const author = ref('')
 const text = ref('')
-const comments = ref([])
+const comments = ref<CommentWithAuthor[]>([])
 const searchAuthor = ref('')
 const fromDate = ref('')
 const toDate = ref('')
 
 const handleSubmit = async () => {
-  //const created_at = new Date().toISOString().slice(0, 10)
   await postComment(id, { text: text.value })
   author.value = ''
   text.value = ''
@@ -123,7 +122,6 @@ onMounted(() => {
             authorId.value = payload.user_id // Asignar el ID del usuario al campo de autorId
             isLoggedIn.value = true
         } catch (error) {
-            console.error('Error al decodificar el token:', error)
             isLoggedIn.value = false
         }
     }
@@ -154,4 +152,14 @@ const cleanFilters = async () => {
   toDate.value = '' 
   await fetchComments()
 }
+
+interface CommentWithAuthor {
+  id: string;
+  article_id: string;
+  author_id: string;
+  text: string;
+  created_at: string;
+  author_name?: string;
+}
+
 </script>

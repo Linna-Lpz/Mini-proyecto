@@ -29,6 +29,38 @@ func getUserCollection() (*mongo.Collection, error) {
 	return userCollection, nil
 }
 
+// GetUser: Obtiene un usuario por ID.
+func GetUser(c *gin.Context) {
+	idParam := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(idParam)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de usuario inválido"})
+		return
+	}
+
+	collection, err := getUserCollection()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error connecting to database"})
+		return
+	}
+
+	var user models.User
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = collection.FindOne(ctx, bson.M{"_id": objID}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Usuario no encontrado"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener el usuario"})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
 // Signup: Registra un nuevo usuario.
 func Signup() gin.HandlerFunc {
 	return func(c *gin.Context) {

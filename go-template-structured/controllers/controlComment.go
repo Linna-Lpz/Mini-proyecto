@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"go-template/utils"
 	"go-template/helpers"
 	"go-template/models"
 	"go-template/services"
@@ -10,6 +9,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -66,32 +67,82 @@ func PostComment(c *gin.Context) {
 
 // GetComments: Obtiene los comentarios de un artículo específico, aplicando un filtro.
 func GetComments(c *gin.Context) {
-	// Obtener la colección de comentarios
 	collection := services.Client.Database("commentsdb").Collection("comments")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Filtros
+	// Obtener article_id del path
 	idStr := c.Param("id")
-	articleID, err:= primitive.ObjectIDFromHex(idStr)
+	articleID, err := primitive.ObjectIDFromHex(idStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de artículo inválido"})
 		return
 	}
 
-	filter := utils.FilterSearch(c, "author", "created_at")
-	filter["article_id"] = articleID
+	// Obtener parámetros de búsqueda
+	searchAuthor := c.Query("author")
+	from := c.Query("from")
+	to := c.Query("to")
 
-	cursor, err := collection.Find(ctx, filter)
+	matchStage := bson.M{
+		"article_id": articleID,
+	}
+
+	// Agregar filtro de fechas si aplica
+	dateFilter := bson.M{}
+	if from != "" {
+		if fromTime, err := time.Parse("2006-01-02", from); err == nil {
+			dateFilter["$gte"] = fromTime
+		}
+	}
+	if to != "" {
+		if toTime, err := time.Parse("2006-01-02", to); err == nil {
+			dateFilter["$lte"] = toTime
+		}
+	}
+	if len(dateFilter) > 0 {
+		matchStage["created_at"] = dateFilter
+	}
+
+	// Pipeline de agregación
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: matchStage}},
+		{{
+			Key: "$lookup", Value: bson.M{
+				"from":         "users",
+				"localField":   "author_id",
+				"foreignField": "_id",
+				"as":           "author_info",
+			},
+		}},
+		{{Key: "$unwind", Value: "$author_info"}},
+	}
+
+	// Agregar filtro por nombre del autor si viene
+	if searchAuthor != "" {
+		pipeline = append(pipeline, bson.D{{
+			Key: "$match", Value: bson.M{
+				"author_info.name": bson.M{"$regex": searchAuthor, "$options": "i"},
+			},
+		}})
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener los artículos"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al obtener los comentarios"})
 		return
 	}
 	defer cursor.Close(ctx)
 
-	var comments []models.Comment
+	// Resultado extendido con nombre del autor
+	type CommentWithAuthor struct {
+		models.Comment `bson:",inline"`
+		AuthorName     string `bson:"author_info.name" json:"author_name"`
+	}
+
+	var comments []CommentWithAuthor
 	if err = cursor.All(ctx, &comments); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al procesar los artículos"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al procesar los comentarios"})
 		return
 	}
 
