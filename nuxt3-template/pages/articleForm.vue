@@ -20,10 +20,15 @@
                     <div class="manuscript-content-form">{{ article.article.content }}</div>
                     <div>
                         <div>
-                            <form @submit.prevent="handleSubmit">
-                                <input v-model="author" placeholder="Tu nombre" required />
+                            <form v-if="isLoggedIn" @submit.prevent="handleSubmit">
+                                <p><strong>Autor:</strong> {{ author }}</p>
                                 <textarea v-model="text" placeholder="Comentario" required></textarea>
-                                <button type="submit">Enviar comentario</button>
+                                <div>
+                                    <button type="submit">Enviar comentario</button>
+                                </div>
+                            </form>
+                            <form v-else>
+                                <p>Para comentar, por favor <NuxtLink to="/login">inicia sesión</NuxtLink> o <NuxtLink to="/register">regístrate</NuxtLink>.</p>
                             </form>
                         </div>
                         <div class="comments-section">
@@ -54,7 +59,7 @@
 
 <script lang="ts" setup>
 
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePostComment } from '../composables/postComment'
 
@@ -67,13 +72,32 @@ const article = computed(() => data.value ?? null)
 
 const { postComment } = usePostComment()
 
+const authorId = ref('')
 const author = ref('')
 const text = ref('')
 
 const handleSubmit = async () => {
-  const created_at = new Date().toISOString().slice(0, 10)
-  await postComment(id, { author: author.value, text: text.value, created_at })
+  //const created_at = new Date().toISOString().slice(0, 10)
+  await postComment(id, { text: text.value })
   author.value = ''
   text.value = ''
 }
+
+const isLoggedIn = ref(false)
+
+onMounted(() => {
+    const token = localStorage.getItem('token')
+    if (token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1])) // Decodificar el token JWT
+            author.value = payload.name // Asignar el nombre del usuario al campo de autor
+            authorId.value = payload.user_id // Asignar el ID del usuario al campo de autorId
+            isLoggedIn.value = true
+        } catch (error) {
+            console.error('Error al decodificar el token:', error)
+            isLoggedIn.value = false
+        }
+    }
+})
+
 </script>

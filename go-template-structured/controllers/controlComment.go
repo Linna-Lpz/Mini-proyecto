@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"go-template/helpers"
 	"go-template/models"
 	"go-template/services"
 	"net/http"
@@ -30,6 +31,23 @@ func PostComment(c *gin.Context) {
 	}
 	comment.ArticleID = objID
 
+	// Obtener el ID del autor desde el token JWT
+	claimsRaw, exists := c.Get("claims")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token no proporcionado"})
+		return
+	}
+	claims := claimsRaw.(*helpers.Claims)
+
+	authorID, err := primitive.ObjectIDFromHex(claims.UserID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de autor inválido"})
+		return
+	}
+	comment.AuthorID = authorID
+	comment.CreatedAt = time.Now()
+
+	// Insertar el comentario en la colección
 	commentsCollection := services.Client.Database("commentsdb").Collection("comments")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -48,6 +66,7 @@ func PostComment(c *gin.Context) {
 
 // GetComments: Obtiene los comentarios de un artículo específico, aplicando un filtro.
 func GetComments(c *gin.Context) {
+	// Obtener la colección de comentarios
 	collection := services.Client.Database("commentsdb").Collection("comments")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
