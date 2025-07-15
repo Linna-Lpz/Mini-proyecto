@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"go-template/utils"
 	"go-template/helpers"
 	"go-template/models"
 	"go-template/services"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -72,47 +72,15 @@ func GetComments(c *gin.Context) {
 	defer cancel()
 
 	// Filtros
-	filter := bson.M{}
-
-	// Filtro por article_id
-	articleIDParam := c.Param("id")
-	if articleIDParam != "" {
-		if articleObjID, err := primitive.ObjectIDFromHex(articleIDParam); err == nil {
-			filter["article_id"] = articleObjID
-		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "ID de artículo inválido"})
-			return
-		}
+	idStr := c.Param("id")
+	articleID, err:= primitive.ObjectIDFromHex(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID de artículo inválido"})
+		return
 	}
 
-	// Filtro por autor (author_id)
-	author := c.Query("author")
-	if author != "" {
-		if authorObjID, err := primitive.ObjectIDFromHex(author); err == nil {
-			filter["author_id"] = authorObjID
-		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "ID de autor inválido"})
-			return
-		}
-	}
-
-	// Filtro por rango de fechas
-	from := c.Query("from")
-	to := c.Query("to")
-	dateFilter := bson.M{}
-	if from != "" {
-		if fromTime, err := time.Parse("2006-01-02", from); err == nil {
-			dateFilter["$gte"] = fromTime
-		}
-	}
-	if to != "" {
-		if toTime, err := time.Parse("2006-01-02", to); err == nil {
-			dateFilter["$lte"] = toTime
-		}
-	}
-	if len(dateFilter) > 0 {
-		filter["created_at"] = dateFilter
-	}
+	filter := utils.FilterSearch(c, "author", "created_at")
+	filter["article_id"] = articleID
 
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {

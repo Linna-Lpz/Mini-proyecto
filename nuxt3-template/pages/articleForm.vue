@@ -31,8 +31,33 @@
                                 <p>Para comentar, por favor <NuxtLink to="/login">inicia sesión</NuxtLink> o <NuxtLink to="/register">regístrate</NuxtLink>.</p>
                             </form>
                         </div>
+                        <div class="filter-section">
+                            <input 
+                                type="text" 
+                                v-model="searchAuthor" 
+                                placeholder="Buscar por autor..." 
+                                class="search-input"
+                                @keyup.enter="fetchComments"
+                            />
+                            <input 
+                                type="date" 
+                                v-model="fromDate" 
+                                class="date-input" 
+                            />
+                            <input 
+                                type="date" 
+                                v-model="toDate" 
+                                class="date-input" 
+                            />
+                            <button class="search-btn" @click="fetchComments">
+                                Aplicar filtro
+                            </button>
+                            <button class="search-btn" @click="cleanFilters">
+                                Limpiar filtro
+                            </button>
+                        </div>
                         <div class="comments-section">
-                            <div v-if="!article.comments || article.comments.length === 0" class="no-articles-vintage">
+                            <div v-if="comments.length === 0" class="no-articles-vintage">
                                 Aún no hay comentarios ¡Se el primero en comentar!
                             </div>
                             <div v-else>
@@ -42,7 +67,7 @@
                                     :key="comment.id"
                                 >
                                     <div class="comment-header">
-                                        <span class="comment-author">{{ comment.author }}</span>
+                                        <span class="comment-author">{{ comment.author_name || 'Anónimo' }}</span>
                                         <span class="comment-date">{{ comment.created_at }}</span>
                                     </div>
                                     <div class="comment-body">{{ comment.text }}</div>
@@ -75,6 +100,10 @@ const { postComment } = usePostComment()
 const authorId = ref('')
 const author = ref('')
 const text = ref('')
+const comments = ref([])
+const searchAuthor = ref('')
+const fromDate = ref('')
+const toDate = ref('')
 
 const handleSubmit = async () => {
   //const created_at = new Date().toISOString().slice(0, 10)
@@ -98,6 +127,31 @@ onMounted(() => {
             isLoggedIn.value = false
         }
     }
+
+    fetchComments()
 })
 
+// Función para obtener comentarios según los filtros actuales
+const fetchComments = async () => {
+  const params = new URLSearchParams()
+  console.log("Fetching comments with params:", params.toString())
+  if (searchAuthor.value) params.append("author", searchAuthor.value)
+  if (fromDate.value) params.append("from", fromDate.value)
+  if (toDate.value) params.append("to", toDate.value)
+  console.log("añadidos: ", params.toString())
+
+  const res = await fetch(`http://localhost:8080/articles/${id}/comments?${params}`)
+  console.log("Response from comments API:", res)
+  const json = await res.json()
+  console.log("JSON response from comments API:", json)
+  comments.value = json.comments || []
+  console.log("Comentarios obtenidos:", comments.value)
+}
+
+const cleanFilters = async () => {
+  searchAuthor.value = ''
+  fromDate.value = ''
+  toDate.value = '' 
+  await fetchComments()
+}
 </script>
